@@ -315,12 +315,9 @@ async function postDonation(event) {
     alert('Donation created (pending approval).');
 
     // If fund donation and amount present, start payment flow
-    if (type === 'fund' && amount && donation.id) {
-      await startFundPayment(amount, donation.id);
-    } else {
-      // refresh lists
-      loadDonorDonations();
-    }
+// After donation is created
+    loadDonorDonations();
+
   } catch (e) {
     console.error(e);
     alert('Failed to post donation (network).');
@@ -354,7 +351,12 @@ async function loadDonorDonations() {
   `: ''}
 
   <div style="margin-top:8px;">
-    ${d.status === 'approved' && d.type === 'fund' && !d.payment_id ? `<button data-id="${d.id}" class="pay-btn">Pay</button>` : ''}
+  ${(d.status?.toLowerCase() === 'approved' && 
+   d.type?.toLowerCase() === 'fund' && 
+   (!d.payment_id || d.payment_id === "")) 
+   ? `<button data-id="${d.id}" class="pay-btn">Pay</button>` 
+  : ''}
+
   </div>
 `;
 
@@ -484,7 +486,9 @@ async function loadMyRequests() {
       const el = document.createElement('div');
       el.className = 'request-card';
       el.innerHTML = `
-        <div>Donation: ${r.donation}</div>
+        <div>Donor: ${r.donor_name || 'Unknown Donor'}</div>
+        <div>Donation: ${r.donation_description || 'Unknown Donation'}</div>
+         
         <div>Status: ${r.status}</div>
       `;
       container.appendChild(el);

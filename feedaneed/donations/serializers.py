@@ -2,31 +2,44 @@ from rest_framework import serializers
 from .models import Donation, DonationRequest
 
 class DonationSerializer(serializers.ModelSerializer):
-    donor = serializers.StringRelatedField(read_only=True)
+    donor_name = serializers.CharField(source='donor.username', read_only=True)
     invoice_pdf_url = serializers.SerializerMethodField()
- 
 
-    def get_invoice_pdf_url(self, obj):
-        if obj.invoice_pdf:
-            return obj.invoice_pdf.url
-        return None
-
-    
     class Meta:
         model = Donation
-        fields =  [
+        fields = [
             'id', 'type', 'description', 'quantity', 'amount',
-            'status', 'donor', 'location', 'lat', 'lng',
-            'invoice_number', 'invoice_pdf_url',
-            'payment_id',
+            'status', 'donor_name', 'location', 'lat', 'lng',
+            'invoice_number', 'invoice_pdf_url', 'payment_id',
         ]
+    def get_invoice_pdf_url(self, obj):
+        request = self.context.get('request')
+        if obj.invoice_pdf and request:
+            return request.build_absolute_uri(obj.invoice_pdf.url)
+        return None 
+    
+
          
 
 
 class DonationRequestSerializer(serializers.ModelSerializer):
-    recipient = serializers.StringRelatedField(read_only=True)
+    donation_description = serializers.CharField(source='donation.description', read_only=True)
+    donor_name = serializers.CharField(source='donation.donor.username', read_only=True)
+    donation_type = serializers.CharField(source='donation.type', read_only=True)
+    donation_amount = serializers.CharField(source='donation.amount', read_only=True)
+    donation_quantity = serializers.CharField(source='donation.quantity', read_only=True)
 
     class Meta:
         model = DonationRequest
-        fields = '__all__'
-        read_only_fields = ('recipient', 'created_at', 'status')
+        fields = [
+            'id',
+            'status',
+            'donation',
+
+            # Added readable fields
+            'donation_description',
+            'donation_type',
+            'donation_amount',
+            'donation_quantity',
+            'donor_name',
+        ]
